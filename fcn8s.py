@@ -24,15 +24,11 @@ def get_upsample_filter(size):
 
 
 class Bilinear(nn.Module):
-  #kanei to upsampling 
-  #ftiaxnei ena filtro
-  #upsampling mesw kernel, convtranspose2d
-  #to kernel (weight) den ginetai optimise
-  #to upologizw me linear interpolations apo ta geitonika
+  
 
     def __init__(self, factor, num_channels):
         super().__init__()
-        self.factor = factor #poso thelw na anevasw ti diastasi tis eikonas 
+        self.factor = factor 
         filter = get_upsample_filter(factor * 2)
         w = torch.zeros(num_channels, num_channels, factor * 2, factor * 2)
         for i in range(num_channels):
@@ -65,23 +61,18 @@ class VGG16_FCN8s(nn.Module):
 
 
 
-#transform 1: anti gi auto to transformation, orizw kai deutero
-#to deutero transformation tha exei gia mesi timi kai diaspora ta 0.5
 
 
-#this was transform before, i made it 'transform1'
     transform1 = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(
             mean=[0.485, 0.456, 0.406],
             std=[0.229, 0.224, 0.225]),
-        ]) #eikones einai sto [0,1] kai afairw ti mesi timi (konta sto 0.5)
-        #kai diairw me std (konta sto 0.2): 1st transformation
-        #tha dwsei tis eikones se ena range ligo megalitero apo to [-1,1] px [-2,2]
+        ]) 
+        
 
         
-    #i added this, independent transformation from the transform1
-    #transform2 maps the images to [-1,1] as MUNIT is trained in this range 
+    
     transform2 = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize(
@@ -90,9 +81,7 @@ class VGG16_FCN8s(nn.Module):
         ])
 
 
-        #prwta ToTensor, meta normalise me mean kai variances apo pragmatikes eikones
-        #anti mean=0.5 kai st dev=0.5 
-#transform 2: me mesi timi 0.5 kai st dev 0.5
+       
 
 
     def __init__(self, num_cls=19, pretrained=True, weights_init=None, 
@@ -100,32 +89,30 @@ class VGG16_FCN8s(nn.Module):
         super().__init__()
         self.output_last_ft = output_last_ft
         self.vgg = make_layers(vgg.cfgs['D']) #cnn apo to vgg  #cfg itan prin
-        self.vgg_head = nn.Sequential( #prosthetoun epipleon convolutional sto vgg network gia to fcnn
+        self.vgg_head = nn.Sequential( 
             nn.Conv2d(512, 4096, 7),
             nn.ReLU(inplace=True),
             nn.Dropout2d(p=0.5),
             nn.Conv2d(4096, 4096, 1),
             nn.ReLU(inplace=True),
             nn.Dropout2d(p=0.5),
-            nn.Conv2d(4096, num_cls, 1) #extra regularisation, teleutaio layer, 4094 channels , feature map mporei na einai polu mikro 
-            ) #4096 channels telika, tha ta kanei map ston arithmo twn klasewn
-        #stacking more conv layers with activations functions on them
-        #makes the decision function more discriminative
+            nn.Conv2d(4096, num_cls, 1) #extra regularisation, 4094 channels 
+            ) 
+       
 
-        #upsampling sto output tou vgg
-        #kai sto output tou proteleutaiou layer kanei upsampling   
-        self.upscore2 = self.upscore_pool4 = Bilinear(2, num_cls) #upsampling sto output tou vgg_head kai sto output tou proteleutaiou layer tou vgg_head
+         
+        self.upscore2 = self.upscore_pool4 = Bilinear(2, num_cls) 
         self.upscore8 = Bilinear(8, num_cls)
         self.score_pool4 = nn.Conv2d(512, num_cls, 1) #input 512 channels
-        #pairnei to output tou self.vgg 
+      
         for param in self.score_pool4.parameters():
-            init.constant_(param, 0) #apo polla levels kanei upsampling
+            init.constant_(param, 0) 
         self.score_pool3 = nn.Conv2d(256, num_cls, 1)
         for param in self.score_pool3.parameters():
-            init.constant_(param, 0) #concatenate, gia na mi xasei arketi xwriki pliroforia
+            init.constant_(param, 0) 
         
         if pretrained:
-            if weights_init is not None: #random initialisation i na fortwsei ta weights apo to vgg
+            if weights_init is not None:
                 self.load_weights(torch.load(weights_init))
             else:
                 self.load_base_weights()
@@ -158,14 +145,14 @@ class VGG16_FCN8s(nn.Module):
         x = F.pad(x, (99, 99, 99, 99), mode='constant', value=0) #padding 
         intermediates = {}
         fts_to_save = {16: 'pool3', 23: 'pool4'}
-        for i, module in enumerate(self.vgg):  #ksekinaei me to vgg 
+        for i, module in enumerate(self.vgg):  
             x = module(x)
             if i in fts_to_save:
                 intermediates[fts_to_save[i]] = x
        
         ft_to_save = 5 # Dropout before classifier
         last_ft = {}
-        for i, module in enumerate(self.vgg_head): #meta to vgg_head 
+        for i, module in enumerate(self.vgg_head): 
             x = module(x)
             if i == ft_to_save:
                 last_ft = x      
