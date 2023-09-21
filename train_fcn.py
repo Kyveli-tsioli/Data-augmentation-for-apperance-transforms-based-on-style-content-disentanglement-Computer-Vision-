@@ -2,10 +2,10 @@ import logging
 import os.path
 import sys
 from collections import deque
-import random #added this
-import matplotlib.pyplot as plt #added this
+import random 
+import matplotlib.pyplot as plt 
 
-from utils_MUNIT import * #added this
+from utils_MUNIT import * 
 
 
 sys.path.append("../..")  # Adds higher directory to python modules path.
@@ -67,7 +67,7 @@ def supervised_loss(score, label, weights=None): #cross entropy loss
 @click.option('--num_cls', default=19, type=int)
 @click.option('--gpu', default='0')
 @click.option('--config_path', default='')
-#@click.option('--checkpoint_dir', default='')
+
 def main(outdir, dataset, datadir, batch_size, lr, p_synthetic, step, iterations,
         momentum, snapshot, downscale, augmentation, fyu, crop_size, 
         weights, model, gpu, num_cls,config_path,logdir):
@@ -96,7 +96,7 @@ def main(outdir, dataset, datadir, batch_size, lr, p_synthetic, step, iterations
   
   
   
-  #was transforms.Scale and changed it to Resize                                 
+                           
   transform1.extend([
       torchvision.transforms.Scale((512 // downscale)), #was 1024
       net.transform1
